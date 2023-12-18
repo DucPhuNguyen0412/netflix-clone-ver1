@@ -35,3 +35,5 @@ class MovieList(models.Model):
         on_delete=models.CASCADE,
     )
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"{self.owner_user.username}'s list - {self.movie.title}"
