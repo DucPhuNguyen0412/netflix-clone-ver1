@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    command: gunicorn netflix_site.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "4321:80"
+    volumes:
+      - ./config/nginx:/etc/nginx/conf.d
+      - D:\Netflix-Clone\django-netflix-clone-main\staticfiles:/code/staticfiles
+    depends_on:
+      - web
+
+  db:
+    image: postgres:11
+    environment:
+      POSTGRES_DB: name
+      POSTGRES_USER: myappuser
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  static_volume:
+  staticfiles_volume:
