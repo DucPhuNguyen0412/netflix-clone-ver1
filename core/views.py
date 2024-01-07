@@ -54,6 +54,30 @@ def search(request):
         return render(request, 'search.html', context)
     else:
         return redirect('/')
+    
+@login_required(login_url='login')
+def genre_search(request, pk):
+    # Assume 'pk' is the genre here. Ensure it's being passed correctly from the URL.
+    genre_name = pk  # Genre from the URL
+    
+    if request.method == 'POST':
+        # Use POST to keep it consistent with the search view
+        search_term = request.POST.get('search_term', '')
+        
+        # Filter movies by genre and search term
+        movies = Movie.objects.filter(genre=genre_name, title__icontains=search_term)
+        
+        context = {
+            'movies': movies,
+            'search_term': search_term,
+            'genre': genre_name,
+        }
+
+        return render(request, 'search.html', context)
+
+    else:
+        # If not a POST request, redirect or handle accordingly
+        return redirect('genre', pk=genre_name)  # Redirecting back to the genre page
 
 @login_required(login_url='login')
 def my_list(request):

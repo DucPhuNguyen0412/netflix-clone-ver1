@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   web:
@@ -8,8 +8,9 @@ services:
       - .:/code
     ports:
       - "8000:8000"
-    depends_on:
-      - db
+    environment:
+      - DATABASE_URL=postgres://postgres.hajscbcxrbrlnqebsqvs:${DATABASE_PASSWORD}@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+    # Include other environment variables as needed
 
   nginx:
     image: nginx:latest
@@ -17,20 +18,10 @@ services:
       - "4321:80"
     volumes:
       - ./config/nginx:/etc/nginx/conf.d
-      - D:\Netflix-Clone\django-netflix-clone-main\staticfiles:/code/staticfiles
+      - ./staticfiles:/code/staticfiles
     depends_on:
       - web
 
-  db:
-    image: postgres:11
-    environment:
-      POSTGRES_DB: name
-      POSTGRES_USER: myappuser
-      POSTGRES_PASSWORD: password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
 volumes:
-  postgres_data:
   static_volume:
   staticfiles_volume:

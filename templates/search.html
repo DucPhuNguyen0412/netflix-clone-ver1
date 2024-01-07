@@ -58,12 +58,17 @@
     
         <div align="center">
             <h2 class="text-xl mb-5">
-                Search Result for '{{search_term}}'
+                {% if genre %}
+                    '{{ genre|title }}' Films - Search Results for '{{ search_term }}'
+                {% else %}
+                    Search Results for '{{ search_term }}'
+                {% endif %}
             </h2>
         </div>
-        <div class="flex space-x-5 overflow-x-auto">
 
-            {% for movie in movies reversed %}
+        <!-- Display movies -->
+        <div class="flex space-x-5 overflow-x-auto">
+            {% for movie in movies %}
             <div class="w-40 h-64 flex-shrink-0 film-card"
                 onclick="showModal(this)" 
                 data-title="{{ movie.title }}"
@@ -76,10 +81,12 @@
                 data-video-url="/movie/{{ movie.uu_id }}"
                 style="background-image: url('{{movie.image_card.url}}'); background-size: cover; background-position: center;">
             </div>
+            {% empty %}
+            <p>No movies found for '{{ search_term }}'{% if genre %} in '{{ genre|title }}' genre{% endif %}.</p>
             {% endfor %}
+        </div>
     </section>
-    
-   
+
 
     <!-- Modal -->
     <div class="modal" id="movieModal">

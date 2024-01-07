@@ -18,5 +18,12 @@ COPY . /code/
 # Collect static files
 RUN python manage.py collectstatic --no-input
 
+# Make sure the entrypoint script is executable
+COPY entrypoint.sh /code/
+RUN chmod +x /code/entrypoint.sh
+
+# Set the entrypoint script to be executed
+ENTRYPOINT ["/code/entrypoint.sh"]
+
 # Run the application
 CMD ["gunicorn", "--bind", ":8000", "--workers", "3", "netflix_site.wsgi:application"]

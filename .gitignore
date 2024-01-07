@@ -27,6 +27,7 @@ local_settings.py
 # Ignore secret keys and sensitive information
 *.secret
 *.key
+*.env
 
 # Ignore compiled Python files
 __pycache__/
