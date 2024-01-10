@@ -16,9 +16,10 @@ class ViewTestCase(TestCase):
 
     @classmethod
     def setUpMockedS3(cls):
-        # Create a mock S3 bucket
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='mytestbucket')
+        with mock_s3():
+            # Create a mock S3 bucket
+            s3 = boto3.client('s3', region_name='us-east-1')
+            s3.create_bucket(Bucket='mytestbucket')
 
     def setUp(self):
         # Create a client to make requests
