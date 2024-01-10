@@ -1,14 +1,11 @@
-# Name of the workflow
 name: Django CI
 
-# Specifies when the workflow should run
 on:
   push:
-    branches: [ "master" ]  # Triggers on a push to the master branch
+    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]  # Triggers on a pull request to the master branch
+    branches: [ "master" ]
 
-# Defines the jobs to run
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,16 +18,10 @@ jobs:
       postgres:
         image: postgres:11
         env:
-          POSTGRES_DB: ${{ secrets.DATABASE_NAME }}
           POSTGRES_USER: ${{ secrets.DATABASE_USER }}
           POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - uses: actions/checkout@v3
@@ -39,6 +30,10 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Generate Unique Database Name
+        id: unique_db_name
+        run: echo "TEST_DATABASE_NAME=mytestdb_${{ github.run_number }}_${{ github.run_id }}" >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: |
@@ -49,8 +44,15 @@ jobs:
         run: |
           python manage.py test
         env:
-          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          DATABASE_NAME: ${{ env.TEST_DATABASE_NAME }}
           DATABASE_USER: ${{ secrets.DATABASE_USER }}
           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+
+      - name: Clean up Test Database
+        if: always()
+        run: |
+          psql -U ${{ secrets.DATABASE_USER }} -h localhost -c "DROP DATABASE IF EXISTS ${{ env.TEST_DATABASE_NAME }}"
+        env:
+          PGPASSWORD: ${{ secrets.DATABASE_PASSWORD }}
