@@ -6,13 +6,21 @@ from core.models import Movie
 from django.core.files.uploadedfile import SimpleUploadedFile
 import boto3
 
+@mock_s3
 class ViewTestCase(TestCase):
     
-    @mock_s3
-    def setUp(self):
-        # Setup mock S3
-        self.setUpMockedS3()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.setUpMockedS3()
 
+    @classmethod
+    def setUpMockedS3(cls):
+        # Create a mock S3 bucket
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='mytestbucket')
+
+    def setUp(self):
         # Create a client to make requests
         self.client = Client()
 
@@ -36,20 +44,7 @@ class ViewTestCase(TestCase):
             video=SimpleUploadedFile("video.mp4", dummy_file_content, content_type="video/mp4")
         )
 
-    def setUpMockedS3(self):
-        # Create a mock S3 service
-        mock = mock_s3()
-        mock.start()
-
-        # Create a mock S3 bucket
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='mytestbucket')
-
-        # Add any additional setup for your S3 mock here
-
     def tearDown(self):
-        # Stop the mock S3 service
-        mock_s3().stop()
         super().tearDown()
 
     def test_index_view(self):
