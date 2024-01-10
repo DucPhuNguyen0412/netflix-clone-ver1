@@ -1,11 +1,18 @@
+from moto import mock_s3
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from core.models import Movie, MovieList
+from core.models import Movie
 from django.core.files.uploadedfile import SimpleUploadedFile
+import boto3
 
 class ViewTestCase(TestCase):
+    
+    @mock_s3
     def setUp(self):
+        # Setup mock S3
+        self.setUpMockedS3()
+
         # Create a client to make requests
         self.client = Client()
 
@@ -28,7 +35,23 @@ class ViewTestCase(TestCase):
             image_cover=SimpleUploadedFile("image_cover.jpg", dummy_file_content, content_type="image/jpeg"),
             video=SimpleUploadedFile("video.mp4", dummy_file_content, content_type="video/mp4")
         )
-        
+
+    def setUpMockedS3(self):
+        # Create a mock S3 service
+        mock = mock_s3()
+        mock.start()
+
+        # Create a mock S3 bucket
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='mytestbucket')
+
+        # Add any additional setup for your S3 mock here
+
+    def tearDown(self):
+        # Stop the mock S3 service
+        mock_s3().stop()
+        super().tearDown()
+
     def test_index_view(self):
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
@@ -53,5 +76,3 @@ class ViewTestCase(TestCase):
         response = self.client.get(reverse('login'), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
-
-    # Add more tests for other views and functionalities
