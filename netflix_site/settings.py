@@ -88,6 +88,11 @@ DATABASES = {
         'PASSWORD': os.getenv('DATABASE_PASSWORD', 'password'),
         'HOST': os.getenv('DATABASE_HOST', 'localhost'),
         'PORT': os.getenv('DATABASE_PORT', '5432'),
+        'TEST': {
+            'NAME': 'mytestdatabase',
+            'CREATE_DB': True,
+            'SERIALIZE': False,
+        },
     }
 }
 
