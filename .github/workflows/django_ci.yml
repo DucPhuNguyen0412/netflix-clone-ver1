@@ -1,11 +1,14 @@
+# Name of the workflow
 name: Django CI
 
+# Specifies when the workflow should run
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master" ]  # Triggers on a push to the master branch
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master" ]  # Triggers on a pull request to the master branch
 
+# Defines the jobs to run
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,10 +17,20 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
 
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      # Add other GitHub secrets here if needed
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_DB: ${{ secrets.DATABASE_NAME }}
+          POSTGRES_USER: ${{ secrets.DATABASE_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v3
@@ -27,12 +40,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Load .env file
-        run: |
-          set -a
-          [ -f ./.env ] && . ./.env
-          set +a
-
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -41,3 +48,9 @@ jobs:
       - name: Run Tests
         run: |
           python manage.py test
+        env:
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
