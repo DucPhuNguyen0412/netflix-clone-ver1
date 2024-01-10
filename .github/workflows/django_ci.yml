@@ -14,20 +14,10 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
 
-    services:
-      postgres:
-        image: postgres:11
-        env:
-          POSTGRES_DB: name
-          POSTGRES_USER: myappuser
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      # Add other GitHub secrets here if needed
 
     steps:
       - uses: actions/checkout@v3
@@ -36,6 +26,12 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Load .env file
+        run: |
+          set -a
+          [ -f ./.env ] && . ./.env
+          set +a
 
       - name: Install Dependencies
         run: |
