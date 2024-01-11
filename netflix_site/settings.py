@@ -154,7 +154,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Storage backend settings
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-if 'test' in sys.argv:
+if os.environ.get('RUNNING_TESTS', 'False') == 'True':
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 CSRF_TRUSTED_ORIGINS = [

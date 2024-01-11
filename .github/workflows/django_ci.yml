@@ -42,6 +42,7 @@ jobs:
 
       - name: Run Tests
         run: |
+          export RUNNING_TESTS=True
           python manage.py test
         env:
           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
