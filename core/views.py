@@ -32,6 +32,7 @@ def movie(request, pk):
 
 @login_required(login_url='login')
 def genre(request, pk):
+    print(f"Received movie UUID in view: {pk}")
     movie_genre = pk
     movies = Movie.objects.filter(genre=movie_genre)
 

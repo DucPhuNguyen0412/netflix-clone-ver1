@@ -12,41 +12,36 @@ MY_BUCKET = "mytestbucket"
 @mock_s3
 class ViewTestCase(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.setUpMockedS3()
+    def setUp(self):
+        # Setup client and user
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='12345')
+        self.client.login(username='testuser', password='12345')
 
-    @classmethod
-    def setUpMockedS3(cls):
-        with mock_s3():
-            s3_client = boto3.client(
+        # Setup mock S3
+        client = boto3.client(
+            "s3",
+            region_name="us-east-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+        try:
+            s3 = boto3.resource(
                 "s3",
                 region_name="us-east-1",
                 aws_access_key_id="fake_access_key",
                 aws_secret_access_key="fake_secret_key",
             )
+            s3.meta.client.head_bucket(Bucket=MY_BUCKET)
+        except botocore.exceptions.ClientError:
+            pass
+        else:
+            err = f"{MY_BUCKET} should not exist."
+            raise EnvironmentError(err)
+        client.create_bucket(Bucket=MY_BUCKET)
 
-            try:
-                s3 = boto3.resource(
-                    "s3",
-                    region_name="us-east-1",
-                    aws_access_key_id="fake_access_key",
-                    aws_secret_access_key="fake_secret_key",
-                )
-                s3.meta.client.head_bucket(Bucket=MY_BUCKET)
-                print("Bucket already exists in mocked S3.")
-            except botocore.exceptions.ClientError:
-                print("Creating mock bucket in mocked S3.")
-                s3_client.create_bucket(Bucket=MY_BUCKET)
-
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='12345')
-        self.client.login(username='testuser', password='12345')
-
+        # Create test movie
         dummy_file_content = b"dummy content"
-
         self.movie = Movie.objects.create(
             title="Test Movie",
             description="Test Description",
@@ -58,9 +53,12 @@ class ViewTestCase(TestCase):
             image_cover=SimpleUploadedFile("image_cover.jpg", dummy_file_content, content_type="image/jpeg"),
             video=SimpleUploadedFile("video.mp4", dummy_file_content, content_type="video/mp4")
         )
-        print("Test movie created.")
+        
+        # Print the uu_id of the movie to check its format
+        print(f"Created movie UUID in test setup: {self.movie.uu_id}")
 
     def tearDown(self):
+        # Clean up mock S3 bucket
         s3 = boto3.resource(
             "s3",
             region_name="us-east-1",
@@ -71,7 +69,6 @@ class ViewTestCase(TestCase):
         for key in bucket.objects.all():
             key.delete()
         bucket.delete()
-        print("Cleaned up mock bucket in mocked S3.")
         super().tearDown()
 
     def test_index_view(self):
@@ -81,7 +78,7 @@ class ViewTestCase(TestCase):
         print("Tested index view.")
 
     def test_movie_view(self):
-        response = self.client.get(reverse('movie', args=[self.movie.id]))
+        response = self.client.get(reverse('movie', args=[self.movie.uu_id]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'movie.html')
         print("Tested movie view.")
