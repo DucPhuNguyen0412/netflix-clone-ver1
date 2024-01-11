@@ -127,23 +127,27 @@ USE_I18N = True
 USE_TZ = True
 
 # S3 Configuration
-if ENVIRONMENT != 'test':
+# Determine if tests are running
+RUNNING_TESTS = os.environ.get('RUNNING_TESTS', 'False') == 'True'
+
+# Storage backend settings
+if not RUNNING_TESTS:
+    # S3 Configuration
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
     AWS_S3_REGION_NAME = 'us-east-1'  # Adjust as needed
-
-    # Static and media files settings for S3
     STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
 else:
-    # Static and media files settings for local storage
+    # Static and media files settings for local storage during tests
     STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static', 'assets')]
     STATIC_URL = '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 
 # CSRF and Session settings
 CSRF_TRUSTED_ORIGINS = [
