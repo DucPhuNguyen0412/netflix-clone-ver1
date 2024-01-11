@@ -50,6 +50,9 @@ jobs:
           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_STORAGE_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
 
       - name: Clean up Test Database
         if: always()
