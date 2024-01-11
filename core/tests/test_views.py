@@ -5,10 +5,13 @@ from django.contrib.auth.models import User
 from core.models import Movie
 from django.core.files.uploadedfile import SimpleUploadedFile
 import boto3
+import botocore
+
+MY_BUCKET = "mytestbucket"
 
 @mock_s3
 class ViewTestCase(TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -17,15 +20,29 @@ class ViewTestCase(TestCase):
     @classmethod
     def setUpMockedS3(cls):
         with mock_s3():
+            # Explicitly set fake AWS credentials
+            s3_client = boto3.client(
+                "s3",
+                region_name="us-east-1",
+                aws_access_key_id="fake_access_key",
+                aws_secret_access_key="fake_secret_key",
+            )
+
             # Create a mock S3 bucket
-            s3 = boto3.client('s3', region_name='us-east-1')
-            s3.create_bucket(Bucket='mytestbucket')
+            try:
+                s3 = boto3.resource(
+                    "s3",
+                    region_name="us-east-1",
+                    aws_access_key_id="fake_access_key",
+                    aws_secret_access_key="fake_secret_key",
+                )
+                s3.meta.client.head_bucket(Bucket=MY_BUCKET)
+            except botocore.exceptions.ClientError:
+                # If the bucket doesn't exist, create it
+                s3_client.create_bucket(Bucket=MY_BUCKET)
 
     def setUp(self):
-        # Create a client to make requests
         self.client = Client()
-
-        # Create a user for testing
         self.user = User.objects.create_user(username='testuser', password='12345')
         self.client.login(username='testuser', password='12345')
 
@@ -46,6 +63,17 @@ class ViewTestCase(TestCase):
         )
 
     def tearDown(self):
+        # Clean up the mock S3 bucket
+        s3 = boto3.resource(
+            "s3",
+            region_name="us-east-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+        bucket = s3.Bucket(MY_BUCKET)
+        for key in bucket.objects.all():
+            key.delete()
+        bucket.delete()
         super().tearDown()
 
     def test_index_view(self):
