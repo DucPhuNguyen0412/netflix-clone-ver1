@@ -157,7 +157,6 @@ STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 if 'test' in sys.argv:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
-
 CSRF_TRUSTED_ORIGINS = [
     'https://django-netflix-clone-dev-tmkz.4.us-1.fl0.io',
     'http://localhost:4321',]
