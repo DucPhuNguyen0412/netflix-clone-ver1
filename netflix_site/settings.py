@@ -22,15 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = os.path.join(BASE_DIR, '.env')
 dotenv.load_dotenv(dotenv_path)
 
+# Determine the environment
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+DEBUG = ENVIRONMENT == 'development'
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -89,13 +87,15 @@ DATABASES = {
         'PASSWORD': os.getenv('DATABASE_PASSWORD', 'password'),
         'HOST': os.getenv('DATABASE_HOST', 'localhost'),
         'PORT': os.getenv('DATABASE_PORT', '5432'),
-        'TEST': {
-            'NAME': 'mytestdatabase',
-            'CREATE_DB': True,
-            'SERIALIZE': False,
-        },
     }
 }
+
+if 'test' in sys.argv or ENVIRONMENT == 'test':
+    DATABASES['default']['TEST'] = {
+        'NAME': 'mytestdatabase',
+        'CREATE_DB': True,
+        'SERIALIZE': False,
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -126,40 +126,30 @@ USE_I18N = True
 
 USE_TZ = True
 
-# S3 settings
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_KEY')
-AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
-AWS_S3_REGION_NAME = 'us-east-1'  # e.g., us-west-1
+# S3 Configuration
+if ENVIRONMENT != 'test':
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+    AWS_S3_REGION_NAME = 'us-east-1'  # Adjust as needed
 
-# Construct the S3 base URL
-S3_BASE_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.1/howto/static-files/
-
-# Static files (CSS, JavaScript, Images)
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static', 'assets'),
-    # Add other directories here if needed
-]
-
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Media files
-MEDIA_URL = 'https://netflix-clone-media-phu.s3.amazonaws.com/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
-# Storage backend settings
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-if os.environ.get('RUNNING_TESTS', 'False') == 'True':
+    # Static and media files settings for S3
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
+else:
+    # Static and media files settings for local storage
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static', 'assets')]
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
+# CSRF and Session settings
 CSRF_TRUSTED_ORIGINS = [
     'https://django-netflix-clone-dev-tmkz.4.us-1.fl0.io',
-    'http://localhost:4321',]
+    'http://localhost:4321',
+]
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
