@@ -20,7 +20,6 @@ class ViewTestCase(TestCase):
     @classmethod
     def setUpMockedS3(cls):
         with mock_s3():
-            # Explicitly set fake AWS credentials
             s3_client = boto3.client(
                 "s3",
                 region_name="us-east-1",
@@ -28,7 +27,6 @@ class ViewTestCase(TestCase):
                 aws_secret_access_key="fake_secret_key",
             )
 
-            # Create a mock S3 bucket
             try:
                 s3 = boto3.resource(
                     "s3",
@@ -37,8 +35,9 @@ class ViewTestCase(TestCase):
                     aws_secret_access_key="fake_secret_key",
                 )
                 s3.meta.client.head_bucket(Bucket=MY_BUCKET)
+                print("Bucket already exists in mocked S3.")
             except botocore.exceptions.ClientError:
-                # If the bucket doesn't exist, create it
+                print("Creating mock bucket in mocked S3.")
                 s3_client.create_bucket(Bucket=MY_BUCKET)
 
     def setUp(self):
@@ -46,10 +45,8 @@ class ViewTestCase(TestCase):
         self.user = User.objects.create_user(username='testuser', password='12345')
         self.client.login(username='testuser', password='12345')
 
-        # Dummy file content
         dummy_file_content = b"dummy content"
 
-        # Create a test movie with dummy image and video files
         self.movie = Movie.objects.create(
             title="Test Movie",
             description="Test Description",
@@ -61,9 +58,9 @@ class ViewTestCase(TestCase):
             image_cover=SimpleUploadedFile("image_cover.jpg", dummy_file_content, content_type="image/jpeg"),
             video=SimpleUploadedFile("video.mp4", dummy_file_content, content_type="video/mp4")
         )
+        print("Test movie created.")
 
     def tearDown(self):
-        # Clean up the mock S3 bucket
         s3 = boto3.resource(
             "s3",
             region_name="us-east-1",
@@ -74,29 +71,35 @@ class ViewTestCase(TestCase):
         for key in bucket.objects.all():
             key.delete()
         bucket.delete()
+        print("Cleaned up mock bucket in mocked S3.")
         super().tearDown()
 
     def test_index_view(self):
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'index.html')
+        print("Tested index view.")
 
     def test_movie_view(self):
-        response = self.client.get(reverse('movie', args=[self.movie.uu_id]))
+        response = self.client.get(reverse('movie', args=[self.movie.id]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'movie.html')
+        print("Tested movie view.")
 
     def test_genre_view(self):
         response = self.client.get(reverse('genre', args=['action']))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'genre.html')
+        print("Tested genre view.")
 
     def test_my_list_view(self):
         response = self.client.get(reverse('my-list'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'my_list.html')
+        print("Tested my list view.")
 
     def test_login_view_redirect(self):
         response = self.client.get(reverse('login'), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
+        print("Tested login view redirect.")
