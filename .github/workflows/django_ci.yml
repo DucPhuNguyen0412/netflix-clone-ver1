@@ -57,6 +57,6 @@ jobs:
       - name: Clean up Test Database
         if: always()
         run: |
-          psql -U ${{ secrets.DATABASE_USER }} -h localhost -c "DROP DATABASE IF EXISTS ${{ env.TEST_DATABASE_NAME }}"
+          psql -U ${{ secrets.DATABASE_USER }} -h localhost -c "DROP DATABASE IF EXISTS ${{ secrets.DATABASE_NAME }}"
         env:
           PGPASSWORD: ${{ secrets.DATABASE_PASSWORD }}
